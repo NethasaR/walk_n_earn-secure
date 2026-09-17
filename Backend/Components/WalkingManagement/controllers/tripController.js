@@ -4,9 +4,9 @@ const { getWalkingDistanceKm } = require("../services/osrmService");
 const User = require("../../User/models/User");
 const createTrip = async (req, res) => {
   try {
-    const { userId, startLocation, endLocation, estimatedDistanceKm } = req.body;
+        const userId = req.user._id;
+    const { startLocation, endLocation, estimatedDistanceKm } = req.body;
 
-    if (!userId) return res.status(400).json({ message: "userId is required" });
     if (!startLocation?.lat || !startLocation?.lng) {
       return res.status(400).json({ message: "startLocation lat and lng are required" });
     }
@@ -47,9 +47,7 @@ const createTrip = async (req, res) => {
 
 const getTripsByUser = async (req, res) => {
   try {
-    const { userId } = req.query;
-
-    if (!userId) return res.status(400).json({ message: "userId query param is required" });
+    const userId = req.user._id;
 
     const trips = await Trip.find({ userId }).sort({ createdAt: -1 });
     return res.status(200).json(trips);

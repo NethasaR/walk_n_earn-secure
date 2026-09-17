@@ -1,5 +1,6 @@
 const express = require("express");
 const router = express.Router();
+const authMiddleware = require("../../../middleware/authMiddleware");
 
 const {
   createTrip,
@@ -9,10 +10,10 @@ const {
   endTrip,
 } = require("../controllers/tripController");
 
-router.post("/trips", createTrip);
-router.get("/trips", getTripsByUser);
-router.put("/trips/:id", updateTrip);
-router.delete("/trips/:id", deleteTrip);
-router.put("/trips/:id/end", endTrip);
+router.post("/trips", authMiddleware, createTrip);
+router.get("/trips", authMiddleware, getTripsByUser);
+router.put("/trips/:id", authMiddleware, updateTrip);
+router.delete("/trips/:id", authMiddleware, deleteTrip);
+router.put("/trips/:id/end", authMiddleware, endTrip);
 
 module.exports = router;
