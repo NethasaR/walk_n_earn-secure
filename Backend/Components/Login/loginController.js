@@ -5,17 +5,40 @@ const User = require("../User/models/User");
 exports.loginUser = async (req, res) => {
   try {
     const { email, password } = req.body;
+    if (
+      typeof email !== "string" ||
+      typeof password !== "string" ||
+      !email.trim() ||
+      !password
+    ) {
+      return res.status(400).json({
+        message: "Invalid input"
+      });
+    }
+    
+    const normalizedEmail = email.trim().toLowerCase();
 
     //Check if user exists
-    const user = await User.findOne({ email });
-    if (!user)
-      return res.status(404).json({ message: "User not found" });
+    const user = await User.findOne({
+      email: normalizedEmail
+    });
 
-    //Compare password
-    const isMatch = await bcrypt.compare(password, user.passwordHash);
-    if (!isMatch)
-      return res.status(400).json({ message: "Invalid Password" });
+if (!user) {
+  return res.status(401).json({
+    message: "Invalid email or password"
+  });
+}
 
+const isMatch = await bcrypt.compare(
+  password,
+  user.passwordHash
+);
+
+if (!isMatch) {
+  return res.status(401).json({
+    message: "Invalid email or password"
+  });
+}
     //Generate JWT token
     const token = jwt.sign(
       { id: user._id, email: user.email },
@@ -29,6 +52,10 @@ exports.loginUser = async (req, res) => {
       token,
     });
   } catch (error) {
-    res.status(500).json({ message: "Server error", error});
+    console.error("Login error:", error.message);
+  
+    return res.status(500).json({
+      message: "Server error"
+    });
   }
 };
