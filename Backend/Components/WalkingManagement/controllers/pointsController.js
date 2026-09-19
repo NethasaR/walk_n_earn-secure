@@ -8,9 +8,9 @@ const calcPoints = (co2SavedKg) => Math.round(co2SavedKg * 10);
 
 const createPointsFromTrip = async (req, res) => {
   try {
-    const { userId, tripId, distanceKm } = req.body;
+    const { tripId, distanceKm } = req.body;
+    const userId = req.user._id;
 
-    if (!userId) return res.status(400).json({ message: "userId is required" });
     if (!tripId) return res.status(400).json({ message: "tripId is required" });
     if (distanceKm === undefined) return res.status(400).json({ message: "distanceKm is required" });
 
@@ -41,7 +41,7 @@ const createPointsFromTrip = async (req, res) => {
 
     return res.status(201).json(tx);
   } catch (err) {
-    return res.status(500).json({ message: "Failed to create points", error: err.message });
+    return res.status(500).json({ message: "Failed to create points" });
   }
 };
 

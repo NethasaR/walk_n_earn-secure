@@ -9,7 +9,7 @@ const {
   deletePointTransaction,
 } = require("../controllers/pointsController");
 
-router.post("/points", createPointsFromTrip);
+router.post("/points", authMiddleware, createPointsFromTrip);
 router.get("/points", getPointsByUser);
 router.put("/points/:id", authMiddleware, updatePointTransaction);
 router.delete("/points/:id", authMiddleware, deletePointTransaction);
