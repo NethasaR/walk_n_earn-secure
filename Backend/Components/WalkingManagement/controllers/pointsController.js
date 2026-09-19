@@ -81,12 +81,20 @@ const updatePointTransaction = async (req, res) => {
       if (req.body[key] !== undefined) updates[key] = req.body[key];
     }
 
-    const tx = await PointTransaction.findByIdAndUpdate(id, updates, { new: true });
-    if (!tx) return res.status(404).json({ message: "Transaction not found" });
+    const tx = await PointTransaction.findOneAndUpdate(
+      { _id: id, userId: req.user._id },
+      updates,
+      { new: true }
+    );
+    if (!tx) {
+      const transaction = await PointTransaction.findById(id).select("_id userId");
+      if (!transaction) return res.status(404).json({ message: "Transaction not found" });
+      return res.status(403).json({ message: "You are not authorized to modify this transaction" });
+    }
 
     return res.status(200).json(tx);
   } catch (err) {
-    return res.status(500).json({ message: "Failed to update transaction", error: err.message });
+    return res.status(500).json({ message: "Failed to update transaction" });
   }
 };
 
@@ -94,12 +102,19 @@ const deletePointTransaction = async (req, res) => {
   try {
     const { id } = req.params;
 
-    const tx = await PointTransaction.findByIdAndDelete(id);
-    if (!tx) return res.status(404).json({ message: "Transaction not found" });
+    const tx = await PointTransaction.findOneAndDelete({
+      _id: id,
+      userId: req.user._id,
+    });
+    if (!tx) {
+      const transaction = await PointTransaction.findById(id).select("_id userId");
+      if (!transaction) return res.status(404).json({ message: "Transaction not found" });
+      return res.status(403).json({ message: "You are not authorized to delete this transaction" });
+    }
 
     return res.status(200).json({ message: "Transaction deleted successfully" });
   } catch (err) {
-    return res.status(500).json({ message: "Failed to delete transaction", error: err.message });
+    return res.status(500).json({ message: "Failed to delete transaction" });
   }
 };
 
