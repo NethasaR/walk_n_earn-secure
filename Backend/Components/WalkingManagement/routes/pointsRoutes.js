@@ -1,5 +1,6 @@
 const express = require("express");
 const router = express.Router();
+const authMiddleware = require("../../../middleware/authMiddleware");
 
 const {
   createPointsFromTrip,
@@ -8,9 +9,9 @@ const {
   deletePointTransaction,
 } = require("../controllers/pointsController");
 
-router.post("/points", createPointsFromTrip);
+router.post("/points", authMiddleware, createPointsFromTrip);
 router.get("/points", getPointsByUser);
-router.put("/points/:id", updatePointTransaction);
-router.delete("/points/:id", deletePointTransaction);
+router.put("/points/:id", authMiddleware, updatePointTransaction);
+router.delete("/points/:id", authMiddleware, deletePointTransaction);
 
 module.exports = router;

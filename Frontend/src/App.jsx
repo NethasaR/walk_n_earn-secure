@@ -14,6 +14,7 @@ import AppLayout from "./components/AppLayout";
 import { useAuth } from "./context/AuthContext";
 import AdminRoute from "./components/AdminRoute";
 import Weather from "./pages/Weather";
+import OAuthCallback from "./pages/OAuthCallback";
 
 function App() {
   const { user } = useAuth();
@@ -34,6 +35,8 @@ function App() {
           element={user ? <Navigate to="/app/walk" replace /> : <Signup />}
         />
         <Route path="/about" element={<About />} />
+        {/* OAuth/OIDC callback route — receives JWT from backend after Google auth */}
+        <Route path="/auth/callback" element={<OAuthCallback />} />
 
         <Route
           path="/app"

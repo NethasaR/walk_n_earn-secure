@@ -1,10 +1,14 @@
 const express = require("express");
 const mongoose = require("mongoose");
 const cors = require("cors");
+const session = require("express-session");
+const MongoStore = require("connect-mongo");
 require("dotenv").config();
+
 const walkingTripRoutes = require("./Components/WalkingManagement/routes/tripRoutes");
 const walkingPointsRoutes = require("./Components/WalkingManagement/routes/pointsRoutes");
 const loginRoutes = require("./Components/Login/loginRoutes");
+const oidcRoutes = require("./Components/Login/oidcRoutes");
 const userRoutes = require("./Components/User/routes/userRoutes");
 const rewardRoutes = require("./Components/RewardAndPoints/routes/rewardRoutes");
 const leaderboardRoutes = require("./Components/Leaderboard/routes/leaderboardRoutes");
@@ -27,9 +31,44 @@ app.get("/api/health", (req, res) => {
   });
 });
 
-// Middleware
-app.use(cors());
+// ---------------------------------------------------------------
+// CORS — only allow the known frontend origin
+// This replaces the previous open cors() call which allowed any origin
+// ---------------------------------------------------------------
+const FRONTEND_URL = process.env.FRONTEND_URL || "http://localhost:5173";
+app.use(
+  cors({
+    origin: FRONTEND_URL,
+    credentials: true, // required for session cookies used in OIDC flow
+  })
+);
+
 app.use(express.json());
+
+// ---------------------------------------------------------------
+// Session middleware — used ONLY for OAuth state/nonce storage
+// The main application uses JWT; sessions are not used for regular auth.
+// connect-mongo stores sessions in MongoDB to avoid in-memory state issues.
+// ---------------------------------------------------------------
+app.use(
+  session({
+    secret: process.env.SESSION_SECRET || "changeme_in_production",
+    resave: false,
+    saveUninitialized: false,
+    store: MongoStore.create({
+      mongoUrl: process.env.MONGO_URI,
+      ttl: 10 * 60, // Session TTL: 10 minutes (matches OAuth state expiry)
+      collectionName: "oidc_sessions",
+    }),
+    cookie: {
+      httpOnly: true,  // Prevent JavaScript access to session cookie
+      secure: process.env.NODE_ENV === "production", // HTTPS only in production
+      sameSite: "lax", // Protects against CSRF while allowing OAuth redirects
+      maxAge: 10 * 60 * 1000, // 10 minutes
+    },
+    name: "wne.sid", // Custom session cookie name
+  })
+);
 
 // Test route
 app.get("/", (req, res) => {
@@ -38,6 +77,7 @@ app.get("/", (req, res) => {
 
 // Actual Routes
 app.use("/api/login", loginRoutes);
+app.use("/auth", oidcRoutes);         // Google OIDC: /auth/google, /auth/google/callback
 app.use("/api/walking", walkingTripRoutes);
 app.use("/api/walking", walkingPointsRoutes);
 app.use("/api/users", userRoutes);
